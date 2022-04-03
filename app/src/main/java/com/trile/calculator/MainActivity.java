@@ -73,9 +73,19 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupNumberBtnClickListeners() {
         for (int i = 0; i < btnNumbers.size(); ++i) {
-            btnNumbers.get(i).setOnClickListener(view -> {});
+            int finalI = i;
+            btnNumbers.get(i).setOnClickListener(view -> onClickNumber(finalI));
         }
 
         btnDot.setOnClickListener(view -> {});
+    }
+
+    private void onClickNumber(int number) {
+        String curTextResult = textResult.getText().toString();
+        if (curTextResult.equals("0")) {
+            textResult.setText("");
+            curTextResult = "";
+        }
+        textResult.setText(curTextResult + number);
     }
 }
