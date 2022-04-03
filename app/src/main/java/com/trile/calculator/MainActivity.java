@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     TextView textResult;
@@ -20,16 +23,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnDivision;
     Button btnEqual;
 
-    Button btn0;
-    Button btn1;
-    Button btn2;
-    Button btn3;
-    Button btn4;
-    Button btn5;
-    Button btn6;
-    Button btn7;
-    Button btn8;
-    Button btn9;
+    List<Button> btnNumbers = Arrays.asList(new Button[10]);
 
     Button btnDot;
 
@@ -50,16 +44,14 @@ public class MainActivity extends AppCompatActivity {
         btnDivision = findViewById(R.id.btnDivision);
         btnEqual = findViewById(R.id.btnEqual);
 
-        btn0 = findViewById(R.id.btn0);
-        btn1 = findViewById(R.id.btn1);
-        btn2 = findViewById(R.id.btn2);
-        btn3 = findViewById(R.id.btn3);
-        btn4 = findViewById(R.id.btn4);
-        btn5 = findViewById(R.id.btn5);
-        btn6 = findViewById(R.id.btn6);
-        btn7 = findViewById(R.id.btn7);
-        btn8 = findViewById(R.id.btn8);
-        btn9 = findViewById(R.id.btn9);
+        // Add all references of number buttons (0-9) by iterating from 0 to 9
+        String btnId;
+        int resourceViewID;
+        for (int i = 0; i < btnNumbers.size(); ++i) {
+            btnId = "btn" + i;
+            resourceViewID = getResources().getIdentifier(btnId, "id", getPackageName());
+            btnNumbers.set(i, findViewById(resourceViewID));
+        }
 
         btnDot = findViewById(R.id.btnDot);
 
@@ -80,16 +72,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupNumberBtnClickListeners() {
-        btn0.setOnClickListener(view -> {});
-        btn1.setOnClickListener(view -> {});
-        btn2.setOnClickListener(view -> {});
-        btn3.setOnClickListener(view -> {});
-        btn4.setOnClickListener(view -> {});
-        btn4.setOnClickListener(view -> {});
-        btn6.setOnClickListener(view -> {});
-        btn7.setOnClickListener(view -> {});
-        btn8.setOnClickListener(view -> {});
-        btn9.setOnClickListener(view -> {});
+        for (int i = 0; i < btnNumbers.size(); ++i) {
+            btnNumbers.get(i).setOnClickListener(view -> {});
+        }
 
         btnDot.setOnClickListener(view -> {});
     }
