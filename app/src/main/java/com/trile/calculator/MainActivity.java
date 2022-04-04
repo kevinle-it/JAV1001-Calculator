@@ -62,5 +62,35 @@ public class MainActivity extends AppCompatActivity {
         btn9 = findViewById(R.id.btn9);
 
         btnDot = findViewById(R.id.btnDot);
+
+        setupOperatorBtnClickListeners();
+        setupNumberBtnClickListeners();
+    }
+
+    private void setupOperatorBtnClickListeners() {
+        btnClear.setOnClickListener(view -> {});
+        btnNegation.setOnClickListener(view -> {});
+        btnPercentage.setOnClickListener(view -> {});
+
+        btnAddition.setOnClickListener(view -> {});
+        btnSubtraction.setOnClickListener(view -> {});
+        btnMultiplication.setOnClickListener(view -> {});
+        btnDivision.setOnClickListener(view -> {});
+        btnEqual.setOnClickListener(view -> {});
+    }
+
+    private void setupNumberBtnClickListeners() {
+        btn0.setOnClickListener(view -> {});
+        btn1.setOnClickListener(view -> {});
+        btn2.setOnClickListener(view -> {});
+        btn3.setOnClickListener(view -> {});
+        btn4.setOnClickListener(view -> {});
+        btn4.setOnClickListener(view -> {});
+        btn6.setOnClickListener(view -> {});
+        btn7.setOnClickListener(view -> {});
+        btn8.setOnClickListener(view -> {});
+        btn9.setOnClickListener(view -> {});
+
+        btnDot.setOnClickListener(view -> {});
     }
 }
