@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
             btnNumbers.get(i).setOnClickListener(view -> onClickNumber(finalI));
         }
 
-        btnDot.setOnClickListener(view -> {});
+        btnDot.setOnClickListener(view -> onClickDot());
     }
 
     private void onClickNumber(int number) {
@@ -144,6 +144,14 @@ public class MainActivity extends AppCompatActivity {
             // ========== Right Operand is being entered -> Enable equal button ==========
             enableEqual();
         }
+    }
+
+    private void onClickDot() {
+        String curTextResult = textResult.getText().toString();
+        if (!curTextResult.contains(".")) {
+            textResult.setText(curTextResult + ".");
+        }
+        shouldResetTextResult = false;
     }
 
     private void onClickOperator(Operation operation) {
