@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupOperatorBtnClickListeners() {
         btnClear.setOnClickListener(view -> onClickClear());
         btnNegation.setOnClickListener(view -> onClickNegation());
-        btnPercentage.setOnClickListener(view -> {});
+        btnPercentage.setOnClickListener(view -> onClickPercentage());
 
         btnAddition.setOnClickListener(view -> onClickOperator(Operation.ADD));
         btnSubtraction.setOnClickListener(view -> onClickOperator(Operation.SUBTRACT));
@@ -129,7 +129,8 @@ public class MainActivity extends AppCompatActivity {
 
                 // ========== Right Operand is being entered ==========
                 if (operation != Operation.UNDEFINED) {
-                    // Set Right operand now for onClickNegation() to work
+                    // Set Right operand now for onClickNegation() & onClickPercentage() &
+                    // onClickEqual to work
                     rightOperand = Double.valueOf(number);
                 }
             } else if (!curTextResult.contains(".")) {
@@ -144,7 +145,8 @@ public class MainActivity extends AppCompatActivity {
 
                 // ========== Right Operand is being entered ==========
                 if (operation != Operation.UNDEFINED) {
-                    // Set Right operand now for onClickNegation() to work
+                    // Set Right operand now for onClickNegation() & onClickPercentage() &
+                    // onClickEqual to work
                     rightOperand = value;
                 }
             } else {    // Else, textResult is a Floating-point number
@@ -158,7 +160,8 @@ public class MainActivity extends AppCompatActivity {
 
                 // ========== Right Operand is being entered ==========
                 if (operation != Operation.UNDEFINED) {
-                    // Set Right operand now for onClickNegation() to work
+                    // Set Right operand now for onClickNegation() & onClickPercentage() &
+                    // onClickEqual to work
                     rightOperand = value;
                 }
             }
@@ -182,9 +185,21 @@ public class MainActivity extends AppCompatActivity {
             btnClear.setText(R.string.text_btn_clear);
         }
 
-        String curTextResult = textResult.getText().toString();
-        if (!curTextResult.contains(".")) {
-            textResult.setText(curTextResult + ".");
+        // Operation is Undefined means left operand is still being entered
+        if (operation == Operation.UNDEFINED || rightOperand != null) {
+            String curTextResult = textResult.getText().toString();
+            if (!curTextResult.contains(".")) {
+                textResult.setText(curTextResult + ".");
+            }
+        } else {    // rightOperand == null (it has not been entered after clicking an operator)
+            textResult.setText("0.");   // Set text for right operand
+            rightOperand = 0.0;
+            // Until here, there are Left operand, Right operand, and Operator
+            // -> Allow clicking equal button now
+            // Allow only one equation at a time
+            disableOperators();
+            // Enable equal button
+            enableEqual();
         }
         shouldResetTextResult = false;
     }
@@ -203,6 +218,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // Prepare for entering Right Operand
+            enableDot();    // Re-enable dot button (if disabled by clicking percentage button)
             shouldResetTextResult = true;
         }
     }
@@ -214,6 +230,8 @@ public class MainActivity extends AppCompatActivity {
         disableEqual();
         // Reset equation & Re-enable operator buttons for entering another equation
         resetEquation();
+        enableNumbers();
+        enableDot();
         enableOperators();
     }
 
@@ -249,6 +267,103 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * ========== PERCENTAGE ==========
+     * Examples (of clicking respective buttons on the app):
+     *
+     * ========== ADDITION ==========
+     * 30 + 20% = 36 (means increase 30 by 20% more) <=> 30 + (30 * 20%) = 30 + 6 = 36
+     * 30 + % = 39 (means increase 30 by 30% more) <=> 30 + (30 * 30%) = 30 + 9 = 39
+     * 20% + 30 = 30.2 <=> 0.2 + 30 = 30.2
+     *
+     * ========== SUBTRACTION ==========
+     * 60 - 25% = 45 (means decrease 60 by 25% less) <=> 60 - (60 * 25%) = 60 - 15 = 45
+     * 60 - % = 24 (means decrease 60 by 60% less) <=> 60 - (60 * 60%) = 60 - 36 = 24
+     * 25% - 60 = -59.75 <=> 0.25 - 60 = -59.75
+     *
+     * ========== MULTIPLICATION ==========
+     * 90 * 30% = 27 (means take off 30% from 90) <=> 90 * 0.3 = 27
+     * 90 * % = 81 (means take off 90% from 90) <=> 90 * 90% = 90 * 0.9 = 81
+     * 30% * 90 = 27 <=> 0.3 * 90 = 27
+     *
+     * ========== DIVISION ==========
+     * 90 / 30% = 300 <=> 90 / 0.3 = 300
+     * 90 / % = 300 <=> 90 / 90% = 90 / 0.9 = 100
+     * 30% / 90 = 0.00333333 <=> 0.3 / 90 = 0.00333333
+     */
+    private void onClickPercentage() {
+        String curTextResult = textResult.getText().toString();
+        NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+
+        // Operation is Undefined means left operand is still being entered
+        if (operation == Operation.UNDEFINED) {
+            try {
+                Number parsedNumber = format.parse(curTextResult);
+                Double value = parsedNumber.doubleValue();
+                value /= 100;
+                DecimalFormat df = getFormatter(value);
+                textResult.setText(df.format(value));
+            } catch (Exception exception) {
+                Log.e("MainActivity", "onClickNegation: exception = " + exception);
+            }
+        } else if (rightOperand != null) {
+            try {
+                switch (operation) {
+                    case ADD:
+                    case SUBTRACT:
+                        rightOperand = leftOperand * (rightOperand / 100);
+                        break;
+                    case MULTIPLY:
+                    case DIVIDE:
+                        rightOperand /= 100;
+                        break;
+                    default:
+                        break;
+                }
+                DecimalFormat df = getFormatter(rightOperand);
+                textResult.setText(df.format(rightOperand));
+
+                // ========== Allow clicking percentage button only once at a time ==========
+                disableNumbers();
+                // Until here, there are Left operand, Right operand, and Operator
+                // -> Allow clicking equal button now
+                // Allow only one equation at a time
+                disableOperators();
+                // Enable equal button
+                enableEqual();
+            } catch (Exception exception) {
+                Log.e("MainActivity", "onClickNegation: exception = " + exception);
+            }
+        } else {    // rightOperand == null (it has not been entered after clicking an operator)
+            switch (operation) {
+                case ADD:
+                case SUBTRACT:
+                    rightOperand = leftOperand * (leftOperand / 100);
+                    break;
+                case MULTIPLY:
+                case DIVIDE:
+                default:
+                    rightOperand = leftOperand / 100;
+                    break;
+            }
+            DecimalFormat df = getFormatter(rightOperand);
+            textResult.setText(df.format(rightOperand));
+
+            // ========== Allow clicking percentage button only once at a time ==========
+            disableNumbers();
+            // Until here, there are Left operand, Right operand, and Operator
+            // -> Allow clicking equal button now
+            // Allow only one equation at a time
+            disableOperators();
+            // Enable equal button
+            enableEqual();
+        }
+
+        // ========== Disable dot button to prevent messing up the percentage calculation ==========
+        disableDot();
+        shouldResetTextResult = true;
+    }
+
     private void onClickEqual() {
         // Allow only one equation at a time
         disableEqual();
@@ -276,9 +391,33 @@ public class MainActivity extends AppCompatActivity {
             textResult.setText(df.format(result));
         }
 
-        // Reset equation & Re-enable operator buttons for entering another equation
+        // Reset equation & Re-enable number (if disabled by clicking percentage button) and
+        // operator buttons for entering another equation
         resetEquation();
+        enableNumbers();
+        enableDot();
         enableOperators();
+    }
+
+    // =============== Allow clicking percentage button only once at a time ===============
+    private void disableNumbers() {
+        for (Button btn : btnNumbers) {
+            btn.setEnabled(false);
+        }
+    }
+
+    private void enableNumbers() {
+        for (Button btn : btnNumbers) {
+            btn.setEnabled(true);
+        }
+    }
+
+    private void disableDot() {
+        btnDot.setEnabled(false);
+    }
+
+    private void enableDot() {
+        btnDot.setEnabled(true);
     }
 
     // =============== Allow only one equation at a time ===============
