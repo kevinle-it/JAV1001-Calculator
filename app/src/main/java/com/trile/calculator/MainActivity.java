@@ -23,7 +23,8 @@ public class MainActivity extends AppCompatActivity {
         ADD,
         SUBTRACT,
         MULTIPLY,
-        DIVIDE
+        DIVIDE,
+        UNDEFINED
     }
 
     final int MAX_NUM_INT_DIGITS = 9;
@@ -43,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnDivision;
     Button btnEqual;
 
-    Operation operation = Operation.ADD;
+    Operation operation = Operation.UNDEFINED;
 
     List<Button> btnNumbers = Arrays.asList(new Button[10]);
 
@@ -86,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupOperatorBtnClickListeners() {
         btnClear.setOnClickListener(view -> onClickClear());
-        btnNegation.setOnClickListener(view -> {});
+        btnNegation.setOnClickListener(view -> onClickNegation());
         btnPercentage.setOnClickListener(view -> {});
 
         btnAddition.setOnClickListener(view -> onClickOperator(Operation.ADD));
@@ -114,41 +115,63 @@ public class MainActivity extends AppCompatActivity {
 
         String curTextResult = textResult.getText().toString();
         if (curTextResult.equals("0") || shouldResetTextResult) {
-            textResult.setText(String.valueOf(number));
+            textResult.setText("");
+            curTextResult = "";
             shouldResetTextResult = false;
-        } else {
-            NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
-            try {
-                // If textResult is an Integer
-                if (!curTextResult.contains(".")) {
-                    Number parsedNumber = format.parse(curTextResult);
-                    Double value = parsedNumber.doubleValue();
-                    value = value * 10 + number;
-                    int decimalNum = value.intValue();
-                    if (String.valueOf(decimalNum).length() <= MAX_NUM_INT_DIGITS) {
-                        DecimalFormat df = getFormatter(value);
-                        textResult.setText(df.format(value));
-                    }
-                } else {    // Else, textResult is a Floating-point number
-                    Number parsedNumber = format.parse(curTextResult + number);
-                    Double value = parsedNumber.doubleValue();
-                    // MAX_NUM_INT_DIGITS + 1 (the digit plus the decimal point)
-                    if (String.valueOf(value).length() <= MAX_NUM_INT_DIGITS + 1) {
-                        DecimalFormat df = getFormatter(value);
-                        textResult.setText(df.format(value));
-                    }
-                }
-            } catch (Exception exception) {
-                Log.e("MainActivity", "onClickNumber: exception = " + exception);
-            }
         }
+        
+        NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+        Double value;
+        try {
+            // If textResult is an Integer
+            if (curTextResult.isEmpty()) {
+                textResult.setText(String.valueOf(number));
 
-        // ========== Right Operand is being entered ==========
-        if (leftOperand != null) {
-            // Allow only one equation at a time
-            disableOperators();
-            // ========== Right Operand is being entered -> Enable equal button ==========
-            enableEqual();
+                // ========== Right Operand is being entered ==========
+                if (operation != Operation.UNDEFINED) {
+                    // Set Right operand now for onClickNegation() to work
+                    rightOperand = Double.valueOf(number);
+                }
+            } else if (!curTextResult.contains(".")) {
+                Number parsedNumber = format.parse(curTextResult);
+                value = parsedNumber.doubleValue();
+                value = value * 10 + number;
+                int decimalNum = value.intValue();
+                if (String.valueOf(decimalNum).length() <= MAX_NUM_INT_DIGITS) {
+                    DecimalFormat df = getFormatter(value);
+                    textResult.setText(df.format(value));
+                }
+
+                // ========== Right Operand is being entered ==========
+                if (operation != Operation.UNDEFINED) {
+                    // Set Right operand now for onClickNegation() to work
+                    rightOperand = value;
+                }
+            } else {    // Else, textResult is a Floating-point number
+                Number parsedNumber = format.parse(curTextResult + number);
+                value = parsedNumber.doubleValue();
+                // MAX_NUM_INT_DIGITS + 1 (the digit plus the decimal point)
+                if (String.valueOf(value).length() <= MAX_NUM_INT_DIGITS + 1) {
+                    DecimalFormat df = getFormatter(value);
+                    textResult.setText(df.format(value));
+                }
+
+                // ========== Right Operand is being entered ==========
+                if (operation != Operation.UNDEFINED) {
+                    // Set Right operand now for onClickNegation() to work
+                    rightOperand = value;
+                }
+            }
+
+            // ========== Right Operand is being entered ==========
+            if (operation != Operation.UNDEFINED) {
+                // Allow only one equation at a time
+                disableOperators();
+                // ========== Right Operand is being entered -> Enable equal button ==========
+                enableEqual();
+            }
+        } catch (Exception exception) {
+            Log.e("MainActivity", "onClickNumber: exception = " + exception);
         }
     }
 
@@ -194,38 +217,63 @@ public class MainActivity extends AppCompatActivity {
         enableOperators();
     }
 
+    private void onClickNegation() {
+        // Operation is Undefined means left operand is still being entered
+        if (operation == Operation.UNDEFINED || rightOperand != null) {
+            String curTextResult = textResult.getText().toString();
+            NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+            try {
+                Number parsedNumber = format.parse(curTextResult);
+                Double value = parsedNumber.doubleValue();
+                value = -value;
+                DecimalFormat df = getFormatter(value);
+                textResult.setText(df.format(value));
+
+                // Right operand is being entered -> apply negation to it
+                // No need to set Left operand here because it will be set by onClickOperator()
+                if (rightOperand != null) {
+                    rightOperand = value;
+                }
+            } catch (Exception exception) {
+                Log.e("MainActivity", "onClickNegation: exception = " + exception);
+            }
+        } else {    // rightOperand == null (it has not been entered after clicking an operator)
+            textResult.setText("-0");   // Set text for right operand
+            rightOperand = -0.0;
+            // Until here, there are Left operand, Right operand, and Operator
+            // -> Allow clicking equal button now
+            // Allow only one equation at a time
+            disableOperators();
+            // Enable equal button
+            enableEqual();
+        }
+    }
+
     private void onClickEqual() {
         // Allow only one equation at a time
         disableEqual();
 
-        String curTextResult = textResult.getText().toString();
-        NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
-        try {
-            Number parsedNumber = format.parse(curTextResult);
-            rightOperand = parsedNumber.doubleValue();
-
-            if (operation == Operation.DIVIDE && rightOperand == 0) {
-                textResult.setText("Error");
-            } else {
-                switch (operation) {
-                    case ADD:
-                        result = leftOperand + rightOperand;
-                        break;
-                    case SUBTRACT:
-                        result = leftOperand - rightOperand;
-                        break;
-                    case MULTIPLY:
-                        result = leftOperand * rightOperand;
-                        break;
-                    case DIVIDE:
-                        result = leftOperand / rightOperand;
-                        break;
-                }
-                DecimalFormat df = getFormatter(result);
-                textResult.setText(df.format(result));
+        if (operation == Operation.DIVIDE && rightOperand == 0) {
+            textResult.setText("Error");
+        } else {
+            switch (operation) {
+                case ADD:
+                    result = leftOperand + rightOperand;
+                    break;
+                case SUBTRACT:
+                    result = leftOperand - rightOperand;
+                    break;
+                case MULTIPLY:
+                    result = leftOperand * rightOperand;
+                    break;
+                case DIVIDE:
+                    result = leftOperand / rightOperand;
+                    break;
+                default:
+                    break;
             }
-        } catch (Exception exception) {
-            Log.e("MainActivity", "onClickEqual: exception = " + exception);
+            DecimalFormat df = getFormatter(result);
+            textResult.setText(df.format(result));
         }
 
         // Reset equation & Re-enable operator buttons for entering another equation
@@ -260,6 +308,7 @@ public class MainActivity extends AppCompatActivity {
         shouldResetTextResult = true;
         leftOperand = null;
         rightOperand = null;
+        operation = Operation.UNDEFINED;
         result = 0.0;
     }
 
