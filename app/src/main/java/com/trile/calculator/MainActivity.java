@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupOperatorBtnClickListeners() {
-        btnClear.setOnClickListener(view -> {});
+        btnClear.setOnClickListener(view -> onClickClear());
         btnNegation.setOnClickListener(view -> {});
         btnPercentage.setOnClickListener(view -> {});
 
@@ -106,6 +106,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onClickNumber(int number) {
+        // Set text for clear button
+        String textBtnClear = getResources().getString(R.string.text_btn_clear);
+        if (!btnClear.getText().equals(textBtnClear)) {
+            btnClear.setText(R.string.text_btn_clear);
+        }
+
         String curTextResult = textResult.getText().toString();
         if (curTextResult.equals("0") || shouldResetTextResult) {
             textResult.setText(String.valueOf(number));
@@ -147,6 +153,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onClickDot() {
+        // Set text for clear button
+        String textBtnClear = getResources().getString(R.string.text_btn_clear);
+        if (!btnClear.getText().equals(textBtnClear)) {
+            btnClear.setText(R.string.text_btn_clear);
+        }
+
         String curTextResult = textResult.getText().toString();
         if (!curTextResult.contains(".")) {
             textResult.setText(curTextResult + ".");
@@ -170,6 +182,16 @@ public class MainActivity extends AppCompatActivity {
             // Prepare for entering Right Operand
             shouldResetTextResult = true;
         }
+    }
+
+    private void onClickClear() {
+        textResult.setText("0");
+        btnClear.setText(R.string.text_btn_clear_initial);
+        // Allow only one equation at a time
+        disableEqual();
+        // Reset equation & Re-enable operator buttons for entering another equation
+        resetEquation();
+        enableOperators();
     }
 
     private void onClickEqual() {
